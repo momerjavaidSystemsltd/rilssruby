@@ -1,18 +1,25 @@
 pipeline {
-
-    stage ('Clone') {
-      checkout scm ' https://github.com/momerjavaidSystemsltd/rilssruby.git'
+  agent { any { image 'ruby:2.6.1' } }
+  stages {
+    stage('requirements') {
+      steps {
+        sh 'bundler'
+      }
     }
-    stage ('Build') {
-        sh gem install bundler
-        sh bundle install
-        sh 'cp config/database-gitlab.yml config/database.yml'
-        sh 'bundle exec rake db:create db:migrate RAILS_ENV=test'
-        sh 'bundle exec rake test'
-        
+    stage('build') {
+      steps {
+        sh 'bundle install'
+      }
     }
-    stage ('Tests') {
-
+    stage('test') {
+      steps {
+        sh 'rake ci:all'
+      }
+      post {
+        always {
+          junit 'test/reports/TEST-AppTest.xml'
+        }
+      }    
     }
-
+  }
 }
